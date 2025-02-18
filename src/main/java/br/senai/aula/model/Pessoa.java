@@ -1,16 +1,23 @@
 package br.senai.aula.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.proxy.HibernateProxy;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.Objects;
 
 @Entity
 @Table(name = "pessoas")
-@Data
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_pessoa", discriminatorType = DiscriminatorType.INTEGER)
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 public class Pessoa implements Serializable {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,6 +25,8 @@ public class Pessoa implements Serializable {
 
     @Column(length = 100, name = "nome")
     private String nome;
+    @Column(name = "data_nasc")
+    private Date dataNasc;
 
     // endereço
     @Column(length = 255, name="endereco")
@@ -43,27 +52,6 @@ public class Pessoa implements Serializable {
     @Column(length = 50, name="email")
     private String email;
 
-
-    // dados do aluno
-    @Column(name = "eh_aluno", nullable = false)
-    private boolean isAluno;
-    @Column(length = 100, name = "nome_resp")
-    private String nomeResponsavel;
-    @Column(precision = 11, name = "cpf_resp")
-    private BigDecimal cpfResponsavel;
-    @Column(precision = 11, name = "fone_resp")
-    private BigDecimal foneResponsavel;
-
-    // dados do professor
-    @Column(name = "eh_professor", nullable = false)
-    private boolean isProfessor;
-    @Column(length = 100, name = "graduacao")
-    private String graduacao;
-    @Column(length = 100, name = "mestrado")
-    private String mestrado;
-    @Column(length = 100, name = "doutorado")
-    private String doutorado;
-
     // Campos de auditoria (registram quando o registro é criado e alterado)
     @Column(name = "criado_em", updatable = false)
     private java.time.LocalDateTime criadoEm;
@@ -79,4 +67,21 @@ public class Pessoa implements Serializable {
     public void onUpdate() {
         this.salvoEm = java.time.LocalDateTime.now();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
+        Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
+        if (thisEffectiveClass != oEffectiveClass) return false;
+        Pessoa pessoa = (Pessoa) o;
+        return getId() != null && Objects.equals(getId(), pessoa.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
+
 }
